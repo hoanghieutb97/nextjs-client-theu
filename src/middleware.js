@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-  // Chỉ áp dụng cho API routes (trừ login và socket)
+  // Chỉ áp dụng cho API routes (trừ login, socket, GetAllDesignFetchData, mongoChangeStream và listDon)
   if (request.nextUrl.pathname.startsWith('/api/') && 
       !request.nextUrl.pathname.startsWith('/api/auth/login') &&
-      !request.nextUrl.pathname.startsWith('/api/socket')) {
+      !request.nextUrl.pathname.startsWith('/api/socket') &&
+      !request.nextUrl.pathname.startsWith('/api/GetAllDesignFetchData') &&
+      !request.nextUrl.pathname.startsWith('/api/mongoChangeStream') &&
+      !request.nextUrl.pathname.startsWith('/api/listDon')) {
     
     // Kiểm tra Authorization header
     const authHeader = request.headers.get('authorization');

@@ -62,6 +62,13 @@ function TestUsersContent() {
     
     setLoading(true);
     setErrors({});
+    // Kiểm tra user đã tồn tại chưa
+    const existedUser = users.find(u => u.hoTen.trim().toLowerCase() === formData.hoTen.trim().toLowerCase());
+    if (existedUser) {
+      alert('Đã có user với tên này!');
+      setLoading(false);
+      return;
+    }
     
     try {
       const data = await apiPost('/api/users', formData);
@@ -170,7 +177,9 @@ function TestUsersContent() {
       borderRadius: '4px',
       border: errors[field] ? '1px solid #dc3545' : '1px solid #ccc',
       width: '100%',
-      fontSize: '14px'
+      fontSize: '20px',
+      background: "#fff",
+      color: "#000",
     };
 
     if (config.type === 'select') {
@@ -205,13 +214,13 @@ function TestUsersContent() {
             type="button"
             onClick={generateNewPassword}
             style={{
-              padding: '8px 12px',
-              backgroundColor: '#28a745',
+              padding: '0px 5px',
+              backgroundColor: '#cacaca',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontSize: '12px'
+              fontSize: '20px'
             }}
             title="Tạo mật khẩu mới"
           >
@@ -246,18 +255,18 @@ function TestUsersContent() {
       <Navigation currentUser={currentUser} />
       
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1>Test Users CRUD Operations</h1>
+       
         
         {/* Form */}
         <div style={{ marginBottom: '30px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
-          <h2>{selectedUser ? 'Edit User' : 'Create New User'}</h2>
+          <h2>{selectedUser ? 'Sửa User' : 'tạo User mới'}</h2>
           <form onSubmit={selectedUser ? updateUser : createUser}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
               {Object.entries(FIELD_CONFIG).map(([field, config]) => (
                 <div key={field}>
                   {renderField(field, config)}
                   {errors[field] && (
-                    <div style={{ color: '#dc3545', fontSize: '12px', marginTop: '2px' }}>
+                    <div style={{ color: '#dc3545', fontSize: '15px', marginTop: '2px' }}>
                       {errors[field]}
                     </div>
                   )}
@@ -286,7 +295,7 @@ function TestUsersContent() {
                   </button>
                 </div>
                 {showQRCode && (
-                  <QRCodeGenerator password={formData.MatKhau} size={150} />
+                  <QRCodeGenerator password={formData.MatKhau} size={250} />
                 )}
               </div>
             )}
@@ -297,7 +306,7 @@ function TestUsersContent() {
                 disabled={loading}
                 style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
               >
-                {loading ? 'Processing...' : (selectedUser ? 'Update User' : 'Create User')}
+                {loading ? 'Processing...' : (selectedUser ? 'Update Userrr' : 'Create User')}
               </button>
               {selectedUser && (
                 <button 
@@ -358,7 +367,7 @@ function TestUsersContent() {
                         <strong>{config.label}:</strong> {user[field] || 'N/A'}
                       </div>
                     ))}
-                    <div><strong>Created:</strong> {user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</div>
+                   
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginLeft: '20px' }}>

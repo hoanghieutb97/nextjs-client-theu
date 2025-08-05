@@ -5,8 +5,11 @@ import Navigation from '../components/Navigation';
 import { getDoiThietKeItems, updateItemStatus, updateItemById, getItemById } from '../utils/listDonApi';
 import { SERVER_THEU } from '../constants';
 import { io } from 'socket.io-client';
+import { useRouter } from 'next/router';
+import copy from 'copy-to-clipboard';
 
 function DesignContent() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState(null);
   const [items, setItems] = useState({
     emptyUserItems: [],
@@ -23,7 +26,9 @@ function DesignContent() {
       setCurrentUser(JSON.parse(userInfo));
     }
   }, []);
-  console.log(currentUser);
+
+
+
 
   // Hàm tách items con từ items gốc
   const flattenItems = (originalItems) => {
@@ -48,77 +53,58 @@ function DesignContent() {
         flattenedItems.push(item);
       }
     });
-    console.log(flattenedItems);
+
 
     return flattenedItems;
   };
 
   // Hàm xử lý khi click button "Nhận"
   const activeCardDesign = async (item) => {
-    try {
-      console.log('Nhận thiết kế cho item:', item);
 
-      const itemId = item._id;
-
-      // Lấy item từ MongoDB
-      const result = await getItemById(itemId);
-
-      if (result.success) {
-        console.log('Item từ MongoDB:', result.data);
-        let itemsMongo = result.data;
-
-        // Lấy thông tin user hiện tại
-        const userInfo = localStorage.getItem('userInfo');
-        const currentUser = userInfo ? JSON.parse(userInfo) : null;
-
-        // So sánh positionTheu
-        if (item.items && item.items.positionTheu &&
-          itemsMongo.items && Array.isArray(itemsMongo.items)) {
-
-          // Duyệt qua tất cả các phần tử trong mảng items
-          let foundMatch = false;
-          let matchIndex = -1;
-
-          for (let i = 0; i < itemsMongo.items.length; i++) {
-            if (itemsMongo.items[i].positionTheu === item.items.positionTheu) {
-              console.log(`Tìm thấy positionTheu khớp tại index ${i}!`);
-              foundMatch = true;
-              matchIndex = i;
-              break;
-            }
+    const itemId = item._id;
+    // Lấy item từ MongoDB
+    const result = await getItemById(itemId);
+    if (result.success) {
+      console.log('Item từ MongoDB:', result.data);
+      let itemsMongo = result.data;
+      // Lấy thông tin user hiện tại
+      const userInfo = localStorage.getItem('userInfo');
+      const currentUser = userInfo ? JSON.parse(userInfo) : null;
+      // so sánh positionTheu
+      if (item.items && item.items.positionTheu &&
+        itemsMongo.items && Array.isArray(itemsMongo.items)) {
+        // Duyệt qua tất cả các phần tử trong mảng items
+        let foundMatch = false;
+        let matchIndex = -1;
+        for (let i = 0; i < itemsMongo.items.length; i++) {
+          if (itemsMongo.items[i].positionTheu === item.items.positionTheu) {
+            console.log(`Tìm thấy positionTheu khớp tại index ${i}!`);
+            foundMatch = true;
+            matchIndex = i;
+            break;
           }
-
-          if (foundMatch) {
-            // Cập nhật userThietKe tại index tìm được
-            const updateData = {
-              [`items.${matchIndex}.userThietKe`]: currentUser ? (currentUser.hoTen || currentUser.vaiTro) : 'Unknown'
-            };
-
-            const updateResult = await updateItemById(itemId, updateData);
-
-            if (updateResult.success) {
-              // Thông báo cho client khác
-              notifyOtherClients();
-              // Refresh lại danh sách
-              fetchItems();
-            } else {
-              console.error('Lỗi cập nhật:', updateResult.error);
-            }
+        }
+        if (foundMatch) {
+          // Cập nhật userThietKe tại index tìm được
+          const updateData = {
+            [`items.${matchIndex}.userThietKe`]: currentUser ? (currentUser.hoTen || currentUser.vaiTro) : 'Unknown'
+          };
+          const updateResult = await updateItemById(itemId, updateData);
+          if (updateResult.success) {
+            // Thông báo cho client khác
+            notifyOtherClients();
+            // Refresh lại danh sách
+            fetchItems();
           } else {
-            console.log('Không tìm thấy positionTheu khớp trong mảng items');
- 
+            console.error('Lỗi cập nhật:', updateResult.error);
           }
         } else {
-          console.log('Không tìm thấy positionTheu để so sánh');
+          console.log('Không tìm thấy positionTheu khớp trong mảng items');
         }
-
-        // Hiển thị thông tin item ở đây nếu cần
       } else {
-
+        console.log('Không tìm thấy positionTheu để so sánh');
       }
-
-    } catch (error) {
-
+      // Hiển thị thông tin item ở đây nếu cần
     }
   };
 
@@ -129,37 +115,27 @@ function DesignContent() {
       const data = await getDoiThietKeItems();
       if (data.success) {
         console.log("data.data", data.data);
-
         // Tách items con trước khi set state
         const flattenedItems = flattenItems(data.data);
-
         // Lọc items theo userThietKe - hiển thị đủ items cùng orderId
         const emptyUserItems = flattenedItems.filter(item => {
           // Nếu item có userThietKe rỗng, hiển thị
-          if (item.items && item.items.userThietKe === "") {
-            return true;
-          }
-          
+          if (item.items && item.items.userThietKe === "" && item.items.status === "") return true;
           // Nếu item có userThietKe không rỗng, kiểm tra xem có item nào cùng orderId có userThietKe rỗng không
           if (item.items && item.items.userThietKe !== "") {
-            const hasEmptyUserInSameOrder = flattenedItems.some(otherItem => 
-              otherItem.orderId === item.orderId && 
-              otherItem.items && 
+            const hasEmptyUserInSameOrder = flattenedItems.some(otherItem =>
+              otherItem.orderId === item.orderId &&
+              otherItem.items &&
               otherItem.items.userThietKe === ""
+              && otherItem.items.status === ""
             );
             return hasEmptyUserInSameOrder;
           }
-          
           return false;
         });
 
-        const runningItems = flattenedItems.filter(item =>
-          item.items && item.items.userThietKe !== ""
-        );
-
-        const userActiveItems = flattenedItems.filter(item =>
-          item.items && item.items.userThietKe === currentUser?.hoTen && item.items.status === ""
-        );
+        const runningItems = flattenedItems.filter(item => item.items && item.items.userThietKe !== "");
+        const userActiveItems = flattenedItems.filter(item => item.items && item.items.userThietKe === currentUser?.hoTen && item.items.status === "");
         const itemsFilter = {
           emptyUserItems: emptyUserItems,
           runningItems: runningItems,
@@ -176,44 +152,23 @@ function DesignContent() {
   // WebSocket connection
   useEffect(() => {
     let socket;
-    
+
     if (currentUser && currentUser.vaiTro === 'Thiết Kế') {
       // Khởi tạo WebSocket server trước
       fetch('/api/socket');
-      
       // Khởi tạo WebSocket connection
-      socket = io({
-        path: '/api/socketio'
-      });
-      
+      socket = io({ path: '/api/socketio' });
       // Lưu socket vào window để sử dụng ở mọi nơi
       window.socket = socket;
-      
       // Lắng nghe các events
-      socket.on('connect', () => {
-        console.log('WebSocket connected:', socket.id);
-      });
-      
-      socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
-      });
-      
-      socket.on('refreshItems', () => {
-        console.log('Nhận được thông báo refresh từ client khác');
-        fetchItems();
-      });
-      
+      socket.on('connect', () => { console.log('WebSocket connected:', socket.id); });
+      socket.on('disconnect', () => { console.log('WebSocket disconnected'); });
+      socket.on('refreshItems', () => { fetchItems(); });
       // Fetch items ban đầu
       fetchItems();
     }
-    
     // Cleanup khi component unmount hoặc dependencies thay đổi
-    return () => {
-      if (socket) {
-        console.log('Cleaning up WebSocket connection');
-        socket.disconnect();
-      }
-    };
+    return () => { if (socket) { socket.disconnect(); } };
   }, [currentUser?.vaiTro]);
 
   // Hàm thông báo cho client khác
@@ -221,20 +176,17 @@ function DesignContent() {
     console.log('Thông báo cho client khác...');
     // Sử dụng socket connection hiện tại nếu có
     if (window.socket && window.socket.connected) {
-      console.log('Using existing socket connection');
+
       window.socket.emit('fetchItems');
     } else {
       console.log('Creating new socket connection for notification');
-      const socket = io({
-        path: '/api/socketio'
-      });
-      
+      const socket = io({ path: '/api/socketio' });
+
       socket.on('connect', () => {
-        console.log('Notify socket connected, emitting fetchItems...');
         socket.emit('fetchItems');
         socket.disconnect();
       });
-      
+
       socket.on('error', (error) => {
         console.error('Notify socket error:', error);
       });
@@ -284,19 +236,19 @@ function DesignContent() {
 
             if (mongoItem.positionTheu === targetPositionTheu) {
               console.log(`Tìm thấy positionTheu khớp tại index ${i}!`);
-     
+
 
               // Thay thế urlEMB
               resultItemMongo.data.items[i].urlEMB = resultURL.path;
 
               console.log('Đã cập nhật urlEMB thành công!');
-              
+
               break;
             }
           }
 
           console.log('Kết quả cuối cùng:', resultItemMongo.data);
-          
+
           // Cập nhật lại vào MongoDB - chỉ gửi phần items đã được cập nhật
           const updateData = {
             items: resultItemMongo.data.items
@@ -305,13 +257,13 @@ function DesignContent() {
 
           if (updateResult.success) {
             console.log('Đã cập nhật urlEMB thành công!');
-            
+
             // Thông báo cho client khác
             notifyOtherClients();
             // Refresh lại danh sách
             fetchItems();
           } else {
-            
+
             alert('Tạo thư mục thành công nhưng lỗi khi cập nhật urlEMB!');
           }
         } else {
@@ -328,7 +280,7 @@ function DesignContent() {
       alert('Lỗi kết nối khi tạo thư mục EMB!');
     }
   }
-  
+
   async function HuyLamItem(userActiveItem) {
     try {
       const resultItemMongo = await getItemById(userActiveItem._id);
@@ -345,13 +297,13 @@ function DesignContent() {
           items: resultItemMongo.data.items
         };
         const updateResult = await updateItemById(userActiveItem._id, updateData);
-                  if (updateResult.success) {
-            console.log('Đã hủy làm item thành công!',updateResult);
-            // Thông báo cho client khác
-            notifyOtherClients();
-            // Refresh lại danh sách
-            fetchItems();
-          } else {
+        if (updateResult.success) {
+          console.log('Đã hủy làm item thành công!', updateResult);
+          // Thông báo cho client khác
+          notifyOtherClients();
+          // Refresh lại danh sách
+          fetchItems();
+        } else {
           alert('Lỗi khi hủy làm item!');
         }
       } else {
@@ -361,6 +313,48 @@ function DesignContent() {
     }
   }
   async function HoanThanhItem(userActiveItem) {
+    console.log("userActiveItem", userActiveItem);
+    console.log(JSON.stringify({
+      folderPath: userActiveItem.items.urlEMB,
+      ActiveItem: userActiveItem
+    }));
+if(userActiveItem.items.urlEMB==""){
+  alert("Vui lòng tạo thư mục EMB trước khi hoàn thành!");
+  return;
+}
+    // Kiểm tra file .EMB trong thư mục
+    if (userActiveItem.items?.urlEMB) {
+      try {
+        const response = await fetch(`${SERVER_THEU.BASE_URL}/checkHaveEMBFile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            folderPath: userActiveItem.items.urlEMB,
+            ActiveItem: userActiveItem
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+
+
+          if (!result.data) {
+            alert(result.message || 'Thư mục không có file .EMB! Vui lòng kiểm tra lại.');
+            return;
+          }
+        } else {
+          const errorResult = await response.json();
+          alert(errorResult.error || 'Lỗi khi kiểm tra file .EMB!');
+          return;
+        }
+      } catch (error) {
+        alert('Lỗi kết nối khi kiểm tra file .EMB!');
+        return;
+      }
+    }
+
     try {
       const resultItemMongo = await getItemById(userActiveItem._id);
       if (resultItemMongo.success && resultItemMongo.data && resultItemMongo.data.items) {
@@ -376,13 +370,13 @@ function DesignContent() {
           items: resultItemMongo.data.items
         };
         const updateResult = await updateItemById(userActiveItem._id, updateData);
-                  if (updateResult.success) {
-            console.log('Đã hủy làm item thành công!',updateResult);
-            // Thông báo cho client khác
-            notifyOtherClients();
-            // Refresh lại danh sách
-            fetchItems();
-          } else {
+        if (updateResult.success) {
+          console.log('Đã hoàn thành item thành công!', updateResult);
+          // Thông báo cho client khác
+          notifyOtherClients();
+          // Refresh lại danh sách
+          fetchItems();
+        } else {
           alert('Lỗi khi hoàn thành item!');
         }
       } else {
@@ -391,13 +385,15 @@ function DesignContent() {
       alert('Lỗi khi hoàn thành item!');
     }
   }
-  console.log(items.userActiveItems);
+
 
   return (
     <>
+      <Head>
+        <title>Thiết kế thêu</title>
+        <meta name="description" content="Thiết kế thêu" />
+      </Head>
       <Navigation currentUser={currentUser} />
-
-
 
       <div className="container">
         <div className="row">
@@ -406,11 +402,11 @@ function DesignContent() {
             {items.emptyUserItems.length > 0 ? (
               <div className="d-flex flex-column gap-2">
                 {items.emptyUserItems.map((item, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="card position-relative"
                     style={{
-                      backgroundColor: item.items?.status === "doiLamKhuon" ? '#51ff7d' : 'white'
+                      backgroundColor: item.items?.status != "" ? '#51ff7d' : 'white'
                     }}
                   >
                     {/* Badge số lượng - chỉ hiển thị khi khác 1 */}
@@ -442,16 +438,16 @@ function DesignContent() {
                         <small>Biến thể: {item.variant || 'N/A'}</small>
                       </p>
                       {/* Button Nhận - chỉ hiển thị khi không có userActiveItems và status không phải doiLamKhuon */}
-                      {(!items.userActiveItems || items.userActiveItems.length === 0) && 
-                       item.items?.status !== "doiLamKhuon" && (
-                        <button
-                          onClick={() => activeCardDesign(item)}
-                          className="btn btn-success btn-sm mt-2 w-100"
-                          style={{ fontSize: '12px' }}
-                        >
-                          Nhận
-                        </button>
-                      )}
+                      {(!items.userActiveItems || items.userActiveItems.length === 0) &&
+                        item.items?.status === "" && (
+                          <button
+                            onClick={() => activeCardDesign(item)}
+                            className="btn btn-success btn-sm mt-2 w-100"
+                            style={{ fontSize: '12px' }}
+                          >
+                            Nhận
+                          </button>
+                        )}
                     </div>
                   </div>
                 ))}
@@ -533,7 +529,7 @@ function DesignContent() {
                             <tr>
                               <td><strong>URL Image:</strong></td>
                               <td>
-                                <a href={items.userActiveItems.items?.urlImage+"?download=yes"} target="_blank" rel="noopener noreferrer">
+                                <a href={items.userActiveItems.items?.urlImage + "?download=yes"} target="_blank" rel="noopener noreferrer">
                                   Xem hình ảnh
                                 </a>
                               </td>
@@ -569,7 +565,7 @@ function DesignContent() {
 
                   </div>
                 </div>
-                
+
                 {/* Kiểm tra urlEMB và hiển thị tương ứng */}
                 {items.userActiveItems.items?.urlEMB && items.userActiveItems.items.urlEMB !== "" ? (
                   <div className="mt-3">
@@ -578,27 +574,21 @@ function DesignContent() {
                       <code className="bg-light p-2 rounded flex-grow-1" style={{ fontSize: '14px' }}>
                         {items.userActiveItems.items.urlEMB}
                       </code>
-                      <button 
+                      <button
                         className="btn btn-outline-primary btn-sm"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(items.userActiveItems.items.urlEMB);
-                           
-                          } catch (error) {
-                         
-                            alert('Lỗi khi copy đường dẫn!');
-                          }
+                        onClick={() => {
+                          copy(items.userActiveItems.items.urlEMB);
                         }}
                         title="Copy đường dẫn"
                       >
                         📋 Copy
                       </button>
                     </div>
-     
+
                   </div>
                 ) : (
-                  <button 
-                    className="btn btn-primary" 
+                  <button
+                    className="btn btn-primary"
                     onClick={() => createFolderEMB(items.userActiveItems)}
                   >
                     📁 Tạo Thư mục

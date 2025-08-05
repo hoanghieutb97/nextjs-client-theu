@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { isAuthenticated, getSessionTimeLeft, formatTimeLeft, logout } from '../utils/auth';
-
+// import { ACCESS_ROLES } from '../constants';
+const { ACCESS_ROLES } = require('../constants');
 const AuthGuard = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -18,7 +19,26 @@ const AuthGuard = ({ children }) => {
     // Lấy thông tin user từ localStorage
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
-      setCurrentUser(JSON.parse(userInfo));
+      const user = JSON.parse(userInfo);
+      setCurrentUser(user);
+      
+      // Kiểm tra quyền truy cập dựa trên ACCESS_ROLES
+      const path = router.pathname;
+      const allowedRoles = ACCESS_ROLES[path];
+      
+      // Nếu không khai báo quyền cho trang này, mặc định không cho vào (trừ admin)
+      if (!allowedRoles) {
+        if (user.vaiTro !== 'admin') {
+          router.replace('/');
+          return;
+        }
+      } else {
+        // Admin luôn vào được, hoặc user có vai trò được phép
+        if (user.vaiTro !== 'admin' && !allowedRoles.includes(user.vaiTro)) {
+          router.replace('/');
+          return;
+        }
+      }
     }
 
     setIsLoading(false);
@@ -59,7 +79,7 @@ const AuthGuard = ({ children }) => {
   return (
     <div>
       {/* Header với thông tin session */}
-      <div style={{
+      {/* <div style={{
         backgroundColor: '#f8f9fa',
         padding: '10px 20px',
         borderBottom: '1px solid #dee2e6',
@@ -84,7 +104,7 @@ const AuthGuard = ({ children }) => {
         >
           Đăng xuất
         </button>
-      </div>
+      </div> */}
       
       {/* Nội dung chính */}
       {children}

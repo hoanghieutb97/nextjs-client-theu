@@ -20,53 +20,27 @@ export default async function handler(req, res) {
         // Match theo status nếu có
         ...(status ? [{ $match: { status: status } }] : []),
         
-        // Chỉ lấy documents có ít nhất 1 item chưa done
+        // Chỉ lấy documents có items là mảng và có ít nhất 1 item có status=""
         {
           $match: {
-            $or: [
-              // Trường hợp 1: Không có items field
-              { items: { $exists: false } },
-              // Trường hợp 2: items không phải array
-              { items: { $not: { $type: "array" } } },
-              // Trường hợp 3: items là array rỗng
-              { items: { $eq: [] } },
-              // Trường hợp 4: items là array và có ít nhất 1 item chưa done
-              {
-                $and: [
-                  { items: { $type: "array" } },
-                  { items: { $ne: [] } },
-                  {
-                    $expr: {
-                      $gt: [
-                        {
-                          $size: {
-                            $filter: {
-                              input: "$items",
-                              cond: { $ne: ["$$this.status", "done"] }
-                            }
-                          }
-                        },
-                        0
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
+            items: { $exists: true, $type: "array" },
+            "items.status": ""
           }
         }
       ];
 
       const items = await listDonCollection.aggregate(pipeline).toArray();
       
+      
       res.status(200).json({
         success: true,
         data: items,
         count: items.length,
-        filteredBy: status || 'all'
+        filteredBy: status || 'all',
+        filterApplied: 'items with listItems containing status=""'
       });
     } catch (error) {
-      console.error('Error fetching listDon items:', error);
+      console.error('Error fetching listDonThietKe items:', error);
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
   } else if (req.method === 'POST') {
@@ -86,7 +60,7 @@ export default async function handler(req, res) {
         data: { _id: result.insertedId, ...newItem }
       });
     } catch (error) {
-      console.error('Error creating listDon item:', error);
+      console.error('Error creating listDonThietKe item:', error);
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
   } else {

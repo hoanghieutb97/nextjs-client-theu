@@ -1,11 +1,12 @@
 import { getAuthToken } from './auth';
 
 const API_BASE_URL = '/api/listDon';
+const API_BASE_URLThietKe = '/api/listDonThietKe';
 
 // Helper function để gọi API với authentication
 const apiCall = async (url, options = {}) => {
   const token = getAuthToken();
-  
+
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -18,11 +19,11 @@ const apiCall = async (url, options = {}) => {
   try {
     const response = await fetch(url, config);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'API call failed');
     }
-    
+
     return data;
   } catch (error) {
     console.error('API call error:', error);
@@ -32,7 +33,7 @@ const apiCall = async (url, options = {}) => {
 
 // Lấy danh sách items có status "doiThietKe"
 export const getDoiThietKeItems = async () => {
-  return await apiCall(API_BASE_URL);
+  return await apiCall(API_BASE_URLThietKe);
 };
 
 // Lấy item theo ID
@@ -45,7 +46,7 @@ export const getItemById = async (id) => {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
       }
     });
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -88,7 +89,7 @@ export const updateItemById = async (id, updateData) => {
       },
       body: JSON.stringify(updateData)
     });
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -107,7 +108,7 @@ export const deleteItemById = async (id) => {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
       }
     });
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -128,5 +129,10 @@ export const getItemsByStatus = async (status) => {
 
 // Lấy tất cả items (không filter theo status)
 export const getAllItems = async () => {
-  return await apiCall(`${API_BASE_URL}/all`);
+  return await apiCall(`${API_BASE_URL}`, {
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
+  });
 }; 

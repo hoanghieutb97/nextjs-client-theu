@@ -28,8 +28,10 @@ export default async function handler(req, res) {
       const db = await getDB();
       const usersCollection = db.collection('users');
 
+      // Loại bỏ _id khỏi updateData
+      const { _id, ...rest } = req.body;
       const updateData = {
-        ...req.body,
+        ...rest,
         updatedAt: new Date()
       };
 

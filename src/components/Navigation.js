@@ -5,12 +5,15 @@ const Navigation = ({ currentUser }) => {
   const router = useRouter();
 
   const navItems = [
-    { label: 'Quản lý Users', path: '/test-users', requiredRole: null },
+    { label: 'Quản lý đơn hàng', path: '/manager', requiredRole: 'admin' },
+    { label: 'Quản lý Users', path: '/test-users', requiredRole: 'admin' },
     { label: 'Thiết kế', path: '/design', requiredRole: 'Thiết Kế' },
-    { label: 'Xem mật khẩu', path: '/view-passwords', requiredRole: null }
+    { label: 'Xem mật khẩu', path: '/view-passwords', requiredRole: 'admin' }
+   
   ];
 
   const canAccess = (item) => {
+    if (currentUser && currentUser.vaiTro === 'admin') return true;
     if (!item.requiredRole) return true;
     return currentUser && currentUser.vaiTro === item.requiredRole;
   };
@@ -42,9 +45,9 @@ const Navigation = ({ currentUser }) => {
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           {navItems.map((item) => {
             if (!canAccess(item)) return null;
-            
+
             const isActive = router.pathname === item.path;
-            
+
             return (
               <a
                 key={item.path}

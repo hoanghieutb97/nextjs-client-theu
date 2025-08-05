@@ -3,10 +3,20 @@ const DATABASE = {
 };
 
 const SERVER_THEU = {
-    BASE_URL: "http://192.168.1.220:1001"
+    BASE_URL: "http://192.168.1.128:1001"
+};
+
+// Định nghĩa quyền truy cập cho từng trang
+ const ACCESS_ROLES = {
+  '/test-users': ['admin'],
+  '/design': ['Thiết Kế', 'admin'],
+  '/manager': ['admin'],
+  '/view-passwords': ['admin'],
+  // Thêm các trang khác nếu cần
 };
 
 module.exports = {
     DATABASE,
-    SERVER_THEU
+    SERVER_THEU,
+    ACCESS_ROLES
 }; 

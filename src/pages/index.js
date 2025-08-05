@@ -3,14 +3,32 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { isAuthenticated } from '../utils/auth';
+import Navigation from '../components/Navigation';
+
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
-  }, []);
+    const authenticated = isAuthenticated();
+    setIsLoggedIn(authenticated);
+
+    if (authenticated) {
+      // Lấy thông tin user từ localStorage
+      const userInfo = localStorage.getItem('userInfo');
+      if (userInfo) {
+        const user = JSON.parse(userInfo);
+        setCurrentUser(user);
+
+        // Nếu user có vai trò "Thiết Kế", tự động chuyển sang trang design
+        if (user.vaiTro === 'Thiết Kế') {
+          router.push('/design');
+        }
+      }
+    }
+  }, [router]);
 
   const handleLoginRedirect = () => {
     router.push('/login');
@@ -19,6 +37,15 @@ export default function Home() {
   const handleUsersRedirect = () => {
     router.push('/test-users');
   };
+  if (currentUser !== "admin") {
+    return (
+      <div>
+        {isLoggedIn && <Navigation currentUser={currentUser} />}
+        <div>Bạn không có quyền truy cập trang này</div>
+
+      </div>
+    )
+  }
 
   return (
     <>
@@ -26,7 +53,10 @@ export default function Home() {
         <title>Hệ Thống Quản Lý</title>
         <meta name="description" content="Hệ thống quản lý users và thiết kế" />
       </Head>
-      
+
+      {/* Navigation */}
+
+
       <div style={{
         minHeight: '100vh',
         backgroundColor: '#f8f9fa',
@@ -59,7 +89,7 @@ export default function Home() {
             }}>
               Quản lý users và thiết kế sản phẩm
             </p>
-            
+
             {!isLoggedIn ? (
               <button
                 onClick={handleLoginRedirect}

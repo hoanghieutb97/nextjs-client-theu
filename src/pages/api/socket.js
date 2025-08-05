@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import { initializeChangeStream } from '../../utils/initChangeStream';
 
 const SocketHandler = (req, res) => {
   if (res.socket.server.io) {
@@ -17,6 +18,11 @@ const SocketHandler = (req, res) => {
     }
   });
   res.socket.server.io = io;
+
+  // Khởi tạo MongoDB Change Stream khi Socket.IO server start
+  initializeChangeStream(io).catch(error => {
+    console.error('Failed to initialize MongoDB Change Stream:', error);
+  });
 
   io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
