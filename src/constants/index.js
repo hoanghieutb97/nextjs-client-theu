@@ -3,7 +3,7 @@ const DATABASE = {
 };
 
 const SERVER_THEU = {
-    BASE_URL: "http://192.168.1.128:1001"
+    BASE_URL: "http://101.99.6.103:1001"
 };
 
 // Định nghĩa quyền truy cập cho từng trang
