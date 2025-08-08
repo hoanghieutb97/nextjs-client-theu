@@ -114,9 +114,10 @@ function DesignContent() {
     try {
       const data = await getDoiThietKeItems();
       if (data.success) {
-        console.log("data.data", data.data);
+
         // Tách items con trước khi set state
         const flattenedItems = flattenItems(data.data);
+        console.log("data.flattenedItems", flattenedItems);
         // Lọc items theo userThietKe - hiển thị đủ items cùng orderId
         const emptyUserItems = flattenedItems.filter(item => {
           // Nếu item có userThietKe rỗng, hiển thị
@@ -318,10 +319,10 @@ function DesignContent() {
       folderPath: userActiveItem.items.urlEMB,
       ActiveItem: userActiveItem
     }));
-if(userActiveItem.items.urlEMB==""){
-  alert("Vui lòng tạo thư mục EMB trước khi hoàn thành!");
-  return;
-}
+    if (userActiveItem.items.urlEMB == "") {
+      alert("Vui lòng tạo thư mục EMB trước khi hoàn thành!");
+      return;
+    }
     // Kiểm tra file .EMB trong thư mục
     if (userActiveItem.items?.urlEMB) {
       try {
@@ -433,6 +434,9 @@ if(userActiveItem.items.urlEMB==""){
                         <small className="text-muted">Ngày: {item.dateItem || 'N/A'}</small>
                       </p>
                       <p className="card-text mb-1">
+                        <small className="text-muted">barcode: {item.barcode || 'N/A'}</small>
+                      </p>
+                      <p className="card-text mb-1">
                         <small>Sản phẩm: {item.product || 'N/A'}</small>
                       </p>
                       <p className="card-text mb-0">
@@ -441,7 +445,14 @@ if(userActiveItem.items.urlEMB==""){
                       <img src={item.items?.urlImage} alt="Image" className="img-fluid" style={{ width: '100%', height: '100px', objectFit: 'contain' }} />
                       {/* Button Nhận - chỉ hiển thị khi không có userActiveItems và status không phải doiLamKhuon */}
                       {(!items.userActiveItems || items.userActiveItems.length === 0) &&
-                        item.items?.status === "" && (
+                        item.items?.status === "" && item.items?.userThietKe !== "" && (
+                          <p className="btn btn-danger btn-sm mt-2 w-100">
+                            <small>Đang Làm: {item.items.userThietKe || 'N/A'}</small>
+                          </p>
+                        )}
+
+                      {(!items.userActiveItems || items.userActiveItems.length === 0) &&
+                        item.items?.status === "" && item.items?.userThietKe === "" && (
                           <button
                             onClick={() => activeCardDesign(item)}
                             className="btn btn-success btn-sm mt-2 w-100"
