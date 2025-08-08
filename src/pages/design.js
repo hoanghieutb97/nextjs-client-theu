@@ -428,6 +428,7 @@ if(userActiveItem.items.urlEMB==""){
                     )}
                     <div className="card-body p-2">
                       <h6 className="card-title mb-1">Order: {item.orderId || 'N/A'}</h6>
+                      <h8 className="card-title mb-1">Vùng: {item.items?.positionTheu || 'N/A'}</h8>
                       <p className="card-text mb-1">
                         <small className="text-muted">Ngày: {item.dateItem || 'N/A'}</small>
                       </p>
@@ -435,8 +436,9 @@ if(userActiveItem.items.urlEMB==""){
                         <small>Sản phẩm: {item.product || 'N/A'}</small>
                       </p>
                       <p className="card-text mb-0">
-                        <small>Biến thể: {item.variant || 'N/A'}</small>
+                        <small>Variant: {item.variant || 'N/A'}</small>
                       </p>
+                      <img src={item.items?.urlImage} alt="Image" className="img-fluid" style={{ width: '100%', height: '100px', objectFit: 'contain' }} />
                       {/* Button Nhận - chỉ hiển thị khi không có userActiveItems và status không phải doiLamKhuon */}
                       {(!items.userActiveItems || items.userActiveItems.length === 0) &&
                         item.items?.status === "" && (

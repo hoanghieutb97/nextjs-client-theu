@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import AuthGuard from '../components/AuthGuard';
 import Navigation from '../components/Navigation';
-import { getAllItems, updateItemById } from '../utils/listDonApi';
+import { getAllItems, updateItemById, deleteItem } from '../utils/listDonApi';
 import QRCodeGeneratorSimple from '../components/QRCodeGeneratorSimple';
 import io from 'socket.io-client';
 import copy from 'copy-to-clipboard';
@@ -199,6 +199,7 @@ function ManagerContent() {
 
       })
     }
+
     else if (trangThai === "chờ Làm Khuôn")
       activeItem.items.forEach(item => {
         if (item.positionTheu == selectedSubItem.items.positionTheu) {
@@ -233,7 +234,13 @@ function ManagerContent() {
 
   }
   console.log(selectedSubItem);
+  async function xoaDonHang(_id) {
+    
+    const updateResult = await deleteItem(_id);
+    setSelectedSubItem(null);
 
+
+  }
   // Modal hiển thị chi tiết
   const renderModal = () => {
     if (!selectedSubItem) return null;
@@ -308,10 +315,12 @@ function ManagerContent() {
               {/* Danh sách các item con cùng OrderId */}
             </div>
 
+
+
             {/* Cột ảnh thiết kế */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <h3 style={{ marginBottom: 16, color: '#2c3e50' }}>Ảnh thiết kế</h3>
-              {selectedSubItem.items?.urlEMB ? (
+              {selectedSubItem.items?.urlImage ? (
                 <div style={{
                   border: '2px solid #e0e0e0',
                   borderRadius: 8,
@@ -366,7 +375,22 @@ function ManagerContent() {
           <div style={{ marginTop: 'auto', textAlign: 'right' }}>
             <button onClick={() => setSelectedSubItem(null)} style={{ marginTop: 24, padding: '10px 28px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, fontSize: 18, cursor: 'pointer' }}>Đóng</button>
           </div>
+          <button
+            className='btn btn-danger' style={{ position: 'absolute', top: 0, right: 0 }}
+            onClick={() => {
+              const textarea = document.getElementById('noteTextarea');
+              const content = textarea.value.trim();
+
+              xoaDonHang(selectedSubItem._id);
+
+
+            }}
+
+          >
+            xóa đơn hàng
+          </button>
         </div>
+
       </div>
     );
   };

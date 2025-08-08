@@ -206,7 +206,7 @@ function TestUsersContent() {
             type={config.type}
             placeholder={config.placeholder}
             value={formData[field]}
-            onChange={(e) => handleInputChange(field, e.target.value)}
+            // onChange={(e) => handleInputChange(field, e.target.value)}
             required={config.required && !selectedUser}
             style={{ ...commonStyle, flex: 1 }}
           />
